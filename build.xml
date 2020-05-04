@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="build" name="iforest">
+    <property environment="env"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.8"/>
+    <property name="source" value="1.8"/>
+    <path id="iforest.classpath">
+        <pathelement location="bin"/>
+    </path>
+    <target name="init">
+        <mkdir dir="bin"/>
+        <mkdir dir="work"/>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="src">
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+    </target>
+    <target name="clean">
+        <delete dir="bin"/>
+        <delete dir="work"/>
+    </target>
+    <target depends="clean" name="cleanall"/>
+    <target depends="build-subprojects,build-project" name="build"/>
+    <target name="build-subprojects"/>
+    <target depends="init" name="build-project">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" includeantruntime="false" source="${source}" target="${target}">
+            <src path="src"/>
+            <classpath refid="iforest.classpath"/>
+        </javac>
+    </target>
+    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
+    <target name="Example1">
+        <java classname="example.Example1" failonerror="true" fork="yes">
+            <classpath refid="iforest.classpath"/>
+        </java>
+    </target>
+    <target name="Example2">
+        <java classname="example.Example2" failonerror="true" fork="yes">
+            <classpath refid="iforest.classpath"/>
+        </java>
+    </target>
+    <target name="Example3">
+        <java classname="example.Example3" failonerror="true" fork="yes">
+            <classpath refid="iforest.classpath"/>
+        </java>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" includeantruntime="false" source="${source}" target="${target}">
+            <src path="work"/>
+            <classpath refid="iforest.classpath"/>
+        </javac>
+    </target>
+    <target name="Example4">
+        <java classname="example.Example4" failonerror="true" fork="yes">
+            <classpath refid="iforest.classpath"/>
+        </java>
+    </target>
+</project>
