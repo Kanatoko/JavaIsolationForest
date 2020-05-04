@@ -10,8 +10,8 @@ Simple Isolation Forest implementation in Java.
 
 Try examples with ant:
 ```
-ant
 ant clean
+ant
 ant Example1
 ant Example2
 ant Example3
