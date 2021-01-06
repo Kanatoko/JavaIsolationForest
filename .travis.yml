@@ -1,0 +1,12 @@
+os: linux
+dist: bionic
+language: java
+
+install:
+  - ant
+
+script:
+  - ant Example1
+  - ant Example2
+  - ant Example3
+  - ant Example4
