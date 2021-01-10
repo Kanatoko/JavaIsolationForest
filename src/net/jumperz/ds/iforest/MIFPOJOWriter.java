@@ -57,6 +57,57 @@ public String getCode( final String packageName, final String className, List< M
 	return b.toString();
 }
 
+public String getCodeForLargeTree( final String packageName, final String className, List< Map< Integer, double[] > > treeList, final int subSampleSize ) throws Exception
+{
+	final StringBuilder b = new StringBuilder();
+
+	b.append( "package " );
+	b.append( packageName );
+	b.append( ";\n" );
+	b.append( "import net.jumperz.ds.iforest.*;\n" );
+	b.append( "public class " );
+	b.append( className );
+	b.append( " extends MIFModel" );
+	b.append( "\n{\n" );
+
+	b.append( "private MIFModel[] models = new MIFModel[]{\n" );
+
+	for( int i = 0; i < treeList.size(); ++i )
+	{
+		b.append( "new MIFModel() {\n" );
+		b.append( "@Override\n" );
+		b.append( "public double getScore( double[] data )\n" );
+		b.append( "{\ndouble depth = 0;\n" );
+		processNode( 0, treeList.get( i ), 0, b );
+		b.append( "return depth;\n}\n" );
+		b.append( "},\n" );
+	}
+
+	b.append( "};\n\n" );
+
+	b.append( "public " );
+	b.append( className );
+	b.append( "()\n{\nsubSampleSize = " );
+	b.append( subSampleSize );
+	b.append( ";\n}\n\n" );
+
+	b.append( "public double getScore( final double[] data )\n{\ndouble depth = 0;\n" );
+	b.append( "for( MIFModel model : models )\n" );
+	b.append( "{\n" );
+	b.append( "	depth += model.getScore( data );\n" );
+	b.append( "}\n" );
+	b.append( "final double avgDepth = depth / " );
+	b.append( treeList.size() );
+	b.append( ";\n" );
+	b.append( "double score = net.jumperz.ds.iforest.MIFUtil.getScore( avgDepth, subSampleSize );\n" );
+	b.append( "return score;\n" );
+	b.append( "}\n\n" );
+
+	b.append( "}" );
+
+	return b.toString();
+}
+
 private static void processNode( final int index, final Map< Integer, double[] > tree, final int depth, final StringBuilder buf )
 {
 	final double[] nodeInfo = tree.get( index );
