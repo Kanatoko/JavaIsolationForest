@@ -42,7 +42,7 @@ public void ignore( final int index )
 	ignoredFeatureSet.add( index );
 }
 
-private int buildNode( final Collection< double[] > data )
+private int buildNode( final List< double[] > data )
 {
 	try
 	{
@@ -66,7 +66,7 @@ private int buildNode( final Collection< double[] > data )
 	}
 }
 
-public void build( final Collection< double[] > data ) throws Exception
+public void build( final List< double[] > data ) throws Exception
 {
 	//必要な場合はサンプルサイズを調整
 	if( data.size() < subSampleSize )
@@ -166,16 +166,27 @@ private void buildNode( final List< double[] > data, final int index, final int 
 	return;
 }
 
-public List< double[] > getSubSample( final Collection< double[] > orig, final int subSampleSize ) throws Exception
+public List< double[] > getSubSample( final List< double[] > orig, final int subSampleSize ) throws Exception
 {
 	if( orig.size() <= subSampleSize )
 	{
 		return new ArrayList( orig );
 	}
 
+	/*
 	final List< double[] > list = new ArrayList( orig );
 	Collections.shuffle( list );
 	return list.subList( 0, subSampleSize );
+	*/
+
+	final Random r = new Random();
+	final List< double[] > list = new ArrayList( subSampleSize );
+	final int size = orig.size();
+	for( int i = 0; i < subSampleSize; ++i )
+	{
+		list.add( orig.get( r.nextInt( size ) ) );
+	}
+	return list;
 }
 
 /*
