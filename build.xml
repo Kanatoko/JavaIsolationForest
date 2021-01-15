@@ -29,6 +29,8 @@
             <src path="src"/>
             <classpath refid="iforest.classpath"/>
         </javac>
+	<mkdir dir="output" />
+	<jar destfile="output/iforest.jar" basedir="bin" />
     </target>
     <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
     <target name="Example1">
