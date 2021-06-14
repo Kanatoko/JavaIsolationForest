@@ -1,7 +1,10 @@
 package net.jumperz.ds.iforest;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.IntStream;
+
+import net.jumperz.ds.MSimpleStream;
 
 public class MIFModelBuilder
 {
@@ -12,10 +15,31 @@ private List< Map< Integer, double[] > > treeList;
 private final Random rand = new Random();
 private Exception ex;
 
+//thinning
+private boolean thinning;
+private double treeRatio = 10;
+private int subSampleRatio = 10;
+private static final int KEY_FOR_THINNING = -1;
+
 public MIFModelBuilder(final int treeNumber)
 {
 	this.treeNumber = treeNumber;
 	treeList = new ArrayList<>( treeNumber );
+}
+
+public void setThinning( final boolean b )
+{
+	this.thinning = b;
+}
+
+public void setThinningTreeRatio( final double treeRatio )
+{
+	this.treeRatio = treeRatio;
+}
+
+public void setThinningSubSampleRatio( final int i )
+{
+	this.subSampleRatio = i;
 }
 
 public void setSubSampleSize( final int i )
@@ -74,8 +98,16 @@ public void build( final List< double[] > data ) throws Exception
 		subSampleSize = data.size();
 	}
 
+	int _treeNumber = treeNumber;
+
+	//thinningの場合は初期生成する木を増やす
+	if( thinning )
+	{
+		_treeNumber = ( int )(treeNumber * treeRatio);
+	}
+
 	//並列処理で木を作る
-	final int[] result = IntStream.range( 0, treeNumber ).parallel().map( x -> buildNode( data ) ).toArray();
+	final int[] result = IntStream.range( 0, _treeNumber ).parallel().map( x -> buildNode( data ) ).toArray();
 
 	//例外が発生したかどうかをチェック
 	for( int i : result )
@@ -85,6 +117,38 @@ public void build( final List< double[] > data ) throws Exception
 			throw ex;
 		}
 	}
+
+	if( thinning )
+	{
+		//凡庸な木を捨てる
+		final List< Map< Integer, double[] > > resultList = new ArrayList<>();
+		treeList.stream().parallel().map( tree -> evalDataOnTree( tree, data, resultList ) ).toArray();
+		resultList.sort( Comparator.comparingDouble( x -> x.get( KEY_FOR_THINNING )[ 0 ] ) );
+		treeList = resultList.subList( 0, treeNumber );
+		treeList.stream().parallel().map( tree ->
+		{
+			tree.remove( KEY_FOR_THINNING );
+			return 0;
+		} ).toArray();
+	}
+}
+
+private double evalDataOnTree( final Map< Integer, double[] > tree, List< double[] > data, final List< Map< Integer, double[] > > resultList )
+{
+	final MSimpleStream ss = new MSimpleStream();
+	data = getSubSample( data, subSampleSize * subSampleRatio );
+	for( int i = 0; i < data.size(); ++i )
+	{
+		final double depth = MIFUtil.getDepth( 0, 0, tree, data.get( i ) );
+		ss.update( depth );
+	}
+
+	tree.put( KEY_FOR_THINNING, new double[] { 1 / ss.getAverage().doubleValue() } );
+	synchronized( resultList )
+	{
+		resultList.add( tree );
+	}
+	return 1;
 }
 
 private void buildNode( final List< double[] > data, final int index, final int depth, final int maxDepth, final Map< Integer, double[] > tree ) throws Exception
@@ -166,18 +230,12 @@ private void buildNode( final List< double[] > data, final int index, final int 
 	return;
 }
 
-public List< double[] > getSubSample( final List< double[] > orig, final int subSampleSize ) throws Exception
+public List< double[] > getSubSample( final List< double[] > orig, final int subSampleSize )
 {
 	if( orig.size() <= subSampleSize )
 	{
 		return new ArrayList( orig );
 	}
-
-	/*
-	final List< double[] > list = new ArrayList( orig );
-	Collections.shuffle( list );
-	return list.subList( 0, subSampleSize );
-	*/
 
 	final Random r = new Random();
 	final List< double[] > list = new ArrayList( subSampleSize );
@@ -198,6 +256,11 @@ public double getScore( final double[] data )
 	return MIFUtil.getScore( data, treeList, subSampleSize );
 }
 
+public double getDepth( final double[] data )
+{
+	return MIFUtil.getScore( data, treeList, subSampleSize, true );
+}
+
 public List< Map< Integer, double[] > > getTreeList()
 {
 	return treeList;
@@ -215,6 +278,11 @@ public Map getContext()
 	map.put( "treeList", treeList );
 	map.put( "subSampleSize", subSampleSize );
 	return map;
+}
+
+public static void p( Object o )
+{
+	System.out.println( o );
 }
 
 }

@@ -31,12 +31,22 @@ public static double c( double n )
  */
 public static double getScore( final double[] data, final List< Map< Integer, double[] > > treeList, final int subSampleSize )
 {
+	return getScore( data, treeList, subSampleSize, false );
+}
+
+public static double getScore( final double[] data, final List< Map< Integer, double[] > > treeList, final int subSampleSize, final boolean returnDepth )
+{
 	double avgDepth = 0;
 	for( final Map< Integer, double[] > tree : treeList )
 	{
 		avgDepth += getDepth( 0, 0, tree, data );
 	}
 	avgDepth /= treeList.size();
+
+	if( returnDepth )
+	{
+		return avgDepth;
+	}
 
 	return getScore( avgDepth, subSampleSize );
 }
@@ -76,7 +86,7 @@ public static int getDepth( final int index, final int depth, final Map< Integer
  */
 public static double getScore( final double[] data, final Map context )
 {
-	final List< Map< Integer, double[] >> treeList = ( List< Map< Integer, double[] >> )context.get( "treeList" );
+	final List< Map< Integer, double[] > > treeList = ( List< Map< Integer, double[] > > )context.get( "treeList" );
 	final int subSampleSize = ( Integer )context.get( "subSampleSize" );
 	return getScore( data, treeList, subSampleSize );
 }
